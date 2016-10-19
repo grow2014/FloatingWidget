@@ -8,8 +8,8 @@ package pro.kinect.fw;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.opengl.Visibility;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -18,8 +18,9 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class FloatingSnitch extends Service {
+public class FloatingSnitch extends Service implements View.OnClickListener{
 
     // this is thw single most important variable..the window manager
     // this variable gives handle to the overlay above all android UI
@@ -30,7 +31,11 @@ public class FloatingSnitch extends Service {
     private long mTouchTriggeredTime;
 
     // the layout to be shown over all the screens
-    private LinearLayout mLocationMarker;
+    private LinearLayout floatingWidget;
+    private ImageView ivTextNote;
+    private ImageView ivMic;
+    private ImageView ivVideoCam;
+    private ImageView ivClose;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -46,7 +51,19 @@ public class FloatingSnitch extends Service {
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
         //get the view ready here
-        mLocationMarker = (LinearLayout) LayoutInflater.from(getApplicationContext()).inflate(R.layout.floating_snitch, null);
+        floatingWidget = (LinearLayout) LayoutInflater.from(getApplicationContext()).inflate(R.layout.floating_snitch, null);
+
+        ivTextNote = (ImageView) floatingWidget.findViewById(R.id.ivTextNote);
+        ivTextNote.setOnClickListener(this);
+
+        ivMic = (ImageView) floatingWidget.findViewById(R.id.ivMic);
+        ivMic.setOnClickListener(this);
+
+        ivVideoCam = (ImageView) floatingWidget.findViewById(R.id.ivVideoCam);
+        ivVideoCam.setOnClickListener(this);
+
+        ivClose = (ImageView) floatingWidget.findViewById(R.id.ivClose);
+        ivClose.setOnClickListener(this);
 
         // here we are going to adjust the window manager layout params,
         // the most important being the last three, here i am using the a non focussable view
@@ -63,16 +80,16 @@ public class FloatingSnitch extends Service {
         //initial setup...can be anything
         params.gravity = Gravity.TOP | Gravity.LEFT;
         params.x = 0;
-        params.y = 100;
+        params.y = 500;
 
         //add the view to the location manager instance....magic happens here.
-        mWindowManager.addView(mLocationMarker, params);
+        mWindowManager.addView(floatingWidget, params);
 
         try {
             // I would suggest take this outside via a touch listner class and set the touch listener here
             // avoid inlining....this is just for example.
 
-            mLocationMarker.setOnTouchListener(new View.OnTouchListener() {
+            floatingWidget.setOnTouchListener(new View.OnTouchListener() {
                 private WindowManager.LayoutParams paramsF = params;
                 private int initialX;
                 private int initialY;
@@ -99,7 +116,7 @@ public class FloatingSnitch extends Service {
                         case MotionEvent.ACTION_MOVE:
                             paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
                             paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
-                            mWindowManager.updateViewLayout(mLocationMarker, paramsF);
+                            mWindowManager.updateViewLayout(floatingWidget, paramsF);
                             break;
                     }
                     return false;
@@ -118,15 +135,15 @@ public class FloatingSnitch extends Service {
         //good practice, remove teh view from the window manager resdponsibly.
         // does haywire stuff when not removed and view is added somewhere else (AGAIN)
         // after manual checks ( for eg after seeing preferences, bundles etc).
-        if (mLocationMarker != null) mWindowManager.removeView(mLocationMarker);
+        if (floatingWidget != null) mWindowManager.removeView(floatingWidget);
     }
 
     //function to expose the location htext hover here
     // pradeep...we might need to initiate a reverse geocode here (OSM of GP Services)
     private void exposeLocationHover(){
-        if(mLocationMarker != null && isMarkerTappped()){
-            TextView tvLocationHover = (TextView) mLocationMarker.findViewById(R.id.main_TvCurrentLoc);
-            tvLocationHover.setVisibility(tvLocationHover.getVisibility()==View.INVISIBLE?View.VISIBLE:View.INVISIBLE);
+        if(floatingWidget != null && isMarkerTappped()){
+//            TextView tvLocationHover = (TextView) mLocationMarker.findViewById(R.id.main_TvCurrentLoc);
+//            tvLocationHover.setVisibility(tvLocationHover.getVisibility()==View.INVISIBLE?View.VISIBLE:View.INVISIBLE);
         }
     }
 
@@ -135,5 +152,26 @@ public class FloatingSnitch extends Service {
         return (System.currentTimeMillis() - mTouchTriggeredTime < 300? true:false);
 
     }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.ivTextNote :
+                Toast.makeText(this, "TextNote", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.ivMic :
+                Toast.makeText(this, "Microphone", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.ivVideoCam :
+                Toast.makeText(this, "VideoCamera", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.ivClose :
+                stopService(new Intent(this, FloatingSnitch.class));
+                break;
+            default: break;
+        }
+    }
+
+
 
 }

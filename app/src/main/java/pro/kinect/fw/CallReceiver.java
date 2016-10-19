@@ -26,6 +26,7 @@ public class CallReceiver extends AbstractCallReceiver {
     @Override
     protected void onIncomingCallAnswered(Context ctx, String number, Date start) {
         Log.d("Custom", "onIncomingCallAnswered");
+        ctx.startService(new Intent(ctx, FloatingSnitch.class));
     }
 
     @Override
@@ -36,11 +37,13 @@ public class CallReceiver extends AbstractCallReceiver {
     @Override
     protected void onOutgoingCallStarted(Context ctx, String number, Date start) {
         Log.d("Custom", "onOutgoingCallStarted");
+        ctx.startService(new Intent(ctx, FloatingSnitch.class));
     }
 
     @Override
     protected void onOutgoingCallEnded(Context ctx, String number, Date start, Date end) {
         Log.d("Custom", "onOutgoingCallEnded");
+        ctx.stopService(new Intent(ctx, FloatingSnitch.class));
     }
 
     @Override
